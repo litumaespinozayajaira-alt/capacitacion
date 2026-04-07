@@ -1,13 +1,31 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Capacitación SST - Ferrearmijos</title>
+    
+    <!-- Script para atrapar cualquier error oculto en iPhone y mostrarlo en pantalla -->
+    <script>
+        window.onerror = function(msg, url, line) {
+            console.error("Error capturado: " + msg + " en línea " + line);
+        };
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Forzamos a que Tailwind NUNCA use el modo oscuro del iPhone
+        tailwind.config = { darkMode: 'class' };
+    </script>
     <style>
+        /* Forzamos colores claros para evitar la pantalla negra de Safari */
+        html, body { 
+            background-color: #f3f4f6 !important; 
+            color: #1f2937 !important;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+        }
         :root { --ferre-orange: #ea580c; --ferre-dark: #1f2937; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; }
+        
         .fade-in { animation: fadeIn 0.3s ease-out forwards; }
         .slide-up { animation: slideUp 0.4s ease-out forwards; }
         .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
@@ -22,41 +40,40 @@
         .img-escenario { width: 100%; height: 220px; object-fit: cover; border-bottom: 5px solid var(--ferre-orange); background-color: #e5e7eb; }
         .point-pop { position: absolute; font-weight: bold; font-size: 1.5rem; animation: floatUp 1s ease-out forwards; pointer-events: none; z-index: 50; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.5); } }
-        /* Fix tap highlight en iOS */
-        button { -webkit-tap-highlight-color: transparent; }
+        button { -webkit-tap-highlight-color: transparent; } /* Fix para botones en iOS */
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-4 bg-gray-100">
 
     <div class="max-w-md w-full bg-white rounded-xl shadow-2xl overflow-hidden relative" id="app-container">
         
         <!-- PANTALLA DE CARGA -->
         <div id="loading-screen" class="p-10 text-center flex flex-col items-center justify-center min-h-[400px]">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mb-4" id="loading-spinner"></div>
-            <p class="text-gray-600 font-semibold" id="loading-text">Conectando a Ferrearmijos...</p>
+            <p class="text-gray-600 font-semibold" id="loading-text">Iniciando sistema Ferrearmijos...</p>
         </div>
 
         <!-- PANTALLA DE REGISTRO -->
-        <div id="login-screen" class="hidden p-8 slide-up">
+        <div id="login-screen" class="hidden p-8 slide-up bg-white">
             <div class="text-center mb-6">
                 <div class="w-16 h-16 bg-orange-600 text-white rounded-lg flex items-center justify-center mx-auto mb-4 shadow-md rotate-3">
                     <svg class="w-10 h-10 -rotate-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </div>
                 <h1 class="text-2xl font-black text-gray-800 uppercase tracking-tight">Ferrearmijos</h1>
                 <h2 class="text-md text-orange-600 font-bold mb-2">Desafío de Seguridad SST</h2>
-                <div id="offline-warning" class="hidden text-xs bg-yellow-100 text-yellow-800 p-2 rounded-lg mb-2">
-                    Modo seguro activado (Safari/Sin conexión).
+                <div id="offline-warning" class="hidden text-xs bg-yellow-100 text-yellow-800 p-2 rounded-lg mb-2 border border-yellow-300">
+                    Conexión inestable (Safari). Jugando en Modo Local.
                 </div>
             </div>
 
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">Tu Nombre y Apellido</label>
-                    <input type="text" id="player-name" placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 transition outline-none">
+                    <input type="text" id="player-name" placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 transition outline-none bg-white text-gray-800">
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">Área de Trabajo</label>
-                    <select id="player-area" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 transition outline-none bg-white">
+                    <select id="player-area" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 transition outline-none bg-white text-gray-800">
                         <option value="">Selecciona tu área...</option>
                         <option value="Administrativa">Administrativa</option>
                         <option value="Ventas">Ventas</option>
@@ -77,7 +94,7 @@
         </div>
 
         <!-- PANTALLA DE JUEGO -->
-        <div id="quiz-screen" class="hidden relative">
+        <div id="quiz-screen" class="hidden relative bg-white">
             <div class="absolute top-2 right-2 bg-gray-900 text-white px-3 py-1 rounded-full font-bold text-sm z-10 shadow-md flex items-center gap-2">
                 <span>Puntos:</span><span id="score-display" class="text-orange-400 text-lg">0</span>
             </div>
@@ -97,12 +114,12 @@
         </div>
 
         <!-- PANTALLA FINAL -->
-        <div id="end-screen" class="hidden p-8 text-center slide-up">
+        <div id="end-screen" class="hidden p-8 text-center slide-up bg-white">
             <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
             </div>
             <h2 class="text-2xl font-black text-gray-800 mb-2">¡Evaluación Terminada!</h2>
-            <p class="text-gray-600 mb-6 font-medium" id="final-message">Resultados procesados correctamente.</p>
+            <p class="text-gray-600 mb-6 font-medium" id="final-message">Resultados procesados.</p>
             <div class="bg-orange-50 rounded-xl p-6 mb-6 border-2 border-orange-100">
                 <p class="text-sm font-bold text-orange-600 uppercase mb-1">Puntaje Final</p>
                 <p class="text-5xl font-black text-gray-900" id="final-score-display">0</p>
@@ -117,85 +134,35 @@
                 <h2 class="text-lg font-bold">🏆 Top Ferrearmijos</h2>
                 <button onclick="reiniciarApp()" class="text-sm font-bold bg-gray-700 px-3 py-1 rounded hover:bg-gray-600">Volver</button>
             </div>
-            <div class="overflow-y-auto flex-1 p-4">
+            <div class="overflow-y-auto flex-1 p-4 bg-white">
                 <div id="leaderboard-list" class="space-y-2"><div class="text-center py-10 text-gray-500">Cargando datos...</div></div>
             </div>
         </div>
     </div>
 
-    <!-- FIREBASE SDKS -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
         // ==========================================
         // PREGUNTAS Y ESCENARIOS (8 EN TOTAL)
         // ==========================================
         const escenarios = [
-            { 
-                area: "Bodega", imagen: "escenario_bodega.jpg", 
-                pregunta: "Estás en bodega y observas que se han apilado cajas fuertes pesadas superando el límite de peso visible de la percha. ¿Qué identificas aquí?", 
-                opciones: ["Un Acto Inseguro", "Una Condición Insegura", "Un Incidente"], correcta: 1, 
-                feedbackErroneo: "Es el estado del entorno físico de la percha, por lo tanto es una Condición Insegura.", 
-                feedbackAcierto: "¡Excelente! Es una Condición Insegura porque el estante presenta riesgo de colapso." 
-            },
-            { 
-                area: "Choferes", imagen: "escenario_chofer.jpg", 
-                pregunta: "Un chofer sube al camión pisando la llanta mojada en lugar de usar los estribos y los tres puntos de apoyo. Esta acción es...", 
-                opciones: ["Enfermedad Ocupacional", "Condición Insegura", "Acto Inseguro"], correcta: 2, 
-                feedbackErroneo: "La PERSONA es quien decide omitir la norma de seguridad al subir, es su acción.", 
-                feedbackAcierto: "¡Correcto! Es un Acto Inseguro que puede provocar una caída a distinto nivel." 
-            },
-            { 
-                area: "Ventas", imagen: "escenario_pasillo.jpg", 
-                pregunta: "En el pasillo principal, un cliente derramó aceite lubricante. ¿Qué representa exactamente el aceite en el piso?", 
-                opciones: ["Riesgo de Caída", "Un Peligro", "Un Accidente"], correcta: 1, 
-                feedbackErroneo: "El riesgo es la probabilidad de caída, pero la sustancia en sí misma es la fuente.", 
-                feedbackAcierto: "¡Bien hecho! El aceite es el PELIGRO (la fuente o situación que puede causar el daño)." 
-            },
-            { 
-                area: "Seguridad", imagen: "escenario_extintor.jpg", 
-                pregunta: "Un nuevo estante de exhibición bloquea por completo el acceso al extintor. Esto es:", 
-                opciones: ["Acto Inseguro", "Condición Insegura", "No hay problema si no hay fuego"], correcta: 1, 
-                feedbackErroneo: "Bloquear equipos de emergencia altera el entorno de forma física y permanente.", 
-                feedbackAcierto: "¡Exacto! Es una Condición Insegura. Los extintores siempre deben estar libres de obstáculos." 
-            },
-            { 
-                area: "General", imagen: "escenario_herramienta.jpg", 
-                pregunta: "Te dan un estilete (cutter) que no tiene seguro en la cuchilla y el mango está roto. ¿Qué debes hacer?", 
-                opciones: ["Usarlo con cuidado", "Ponerle cinta adhesiva", "Reportarlo y solicitar cambio"], correcta: 2, 
-                feedbackErroneo: "Usar herramientas hechizas o defectuosas causa accidentes graves como cortes profundos.", 
-                feedbackAcierto: "¡Correcto! Reportar herramientas en mal estado es el paso #1 de la seguridad preventiva." 
-            },
-            { 
-                area: "Cargas", imagen: "escenario_cargas.jpg", 
-                pregunta: "Al levantar una caja de 25kg, doblas la espalda (como una grúa) en lugar de flexionar las rodillas. ¿Qué riesgo enfrentas principalmente?", 
-                opciones: ["Riesgo Físico", "Riesgo Ergonómico", "Riesgo Mecánico"], correcta: 1, 
-                feedbackErroneo: "No es exposición a temperatura o ruido (Físico), es un problema de mala postura y esfuerzo.", 
-                feedbackAcierto: "¡Correcto! Es un Riesgo Ergonómico por sobreesfuerzo, lo que provoca hernias y lumbalgias." 
-            },
-            { 
-                area: "Psicosocial", imagen: "escenario_psicosocial.jpg", 
-                pregunta: "Hay constante sobrecarga de tareas, presión excesiva y mala comunicación, generando estrés agudo. ¿Qué tipo de riesgo laboral es este?", 
-                opciones: ["Riesgo Psicosocial", "Riesgo Biológico", "Condición Física"], correcta: 0, 
-                feedbackErroneo: "Los biológicos son virus/bacterias. Esto afecta directamente la salud mental y emocional.", 
-                feedbackAcierto: "¡Muy bien! Es un Riesgo Psicosocial. La mala organización del trabajo afecta gravemente la salud." 
-            },
-            { 
-                area: "Administrativa", imagen: "escenario_oficina.jpg", 
-                pregunta: "Una compañera de oficina pasa 8 horas tecleando con el monitor muy bajo, la espalda encorvada y sin apoyar la zona lumbar. ¿A qué se expone?", 
-                opciones: ["Riesgo Ergonómico", "Riesgo Mecánico", "Acto Seguro Autonómo"], correcta: 0, 
-                feedbackErroneo: "Incorrecto. No hay partes móviles que causen golpes (Mecánico). Es un problema postural.", 
-                feedbackAcierto: "¡Excelente! Es un Riesgo Ergonómico. Las malas posturas prolongadas causan trastornos musculoesqueléticos." 
-            }
+            { area: "Bodega", imagen: "escenario_bodega.jpg", pregunta: "Estás en bodega y observas que se han apilado cajas fuertes pesadas superando el límite de peso visible de la percha. ¿Qué identificas aquí?", opciones: ["Un Acto Inseguro", "Una Condición Insegura", "Un Incidente"], correcta: 1, feedbackErroneo: "Es el estado del entorno físico de la percha, por lo tanto es una Condición Insegura.", feedbackAcierto: "¡Excelente! Es una Condición Insegura porque el estante presenta riesgo de colapso." },
+            { area: "Choferes", imagen: "escenario_chofer.jpg", pregunta: "Un chofer sube al camión pisando la llanta mojada en lugar de usar los estribos y los tres puntos de apoyo. Esta acción es...", opciones: ["Enfermedad Ocupacional", "Condición Insegura", "Acto Inseguro"], correcta: 2, feedbackErroneo: "La PERSONA es quien decide omitir la norma de seguridad al subir, es su acción.", feedbackAcierto: "¡Correcto! Es un Acto Inseguro que puede provocar una caída a distinto nivel." },
+            { area: "Ventas", imagen: "escenario_pasillo.jpg", pregunta: "En el pasillo principal, un cliente derramó aceite lubricante. ¿Qué representa exactamente el aceite en el piso?", opciones: ["Riesgo de Caída", "Un Peligro", "Un Accidente"], correcta: 1, feedbackErroneo: "El riesgo es la probabilidad de caída, pero la sustancia en sí misma es la fuente.", feedbackAcierto: "¡Bien hecho! El aceite es el PELIGRO (la fuente o situación que puede causar el daño)." },
+            { area: "Seguridad", imagen: "escenario_extintor.jpg", pregunta: "Un nuevo estante de exhibición bloquea por completo el acceso al extintor. Esto es:", opciones: ["Acto Inseguro", "Condición Insegura", "No hay problema si no hay fuego"], correcta: 1, feedbackErroneo: "Bloquear equipos de emergencia altera el entorno de forma física y permanente.", feedbackAcierto: "¡Exacto! Es una Condición Insegura. Los extintores siempre deben estar libres de obstáculos." },
+            { area: "General", imagen: "escenario_herramienta.jpg", pregunta: "Te dan un estilete (cutter) que no tiene seguro en la cuchilla y el mango está roto. ¿Qué debes hacer?", opciones: ["Usarlo con cuidado", "Ponerle cinta adhesiva", "Reportarlo y solicitar cambio"], correcta: 2, feedbackErroneo: "Usar herramientas hechizas o defectuosas causa accidentes graves como cortes profundos.", feedbackAcierto: "¡Correcto! Reportar herramientas en mal estado es el paso #1 de la seguridad preventiva." },
+            { area: "Cargas", imagen: "escenario_cargas.jpg", pregunta: "Al levantar una caja de 25kg, doblas la espalda (como una grúa) en lugar de flexionar las rodillas. ¿Qué riesgo enfrentas principalmente?", opciones: ["Riesgo Físico", "Riesgo Ergonómico", "Riesgo Mecánico"], correcta: 1, feedbackErroneo: "No es exposición a temperatura o ruido (Físico), es un problema de mala postura y esfuerzo.", feedbackAcierto: "¡Correcto! Es un Riesgo Ergonómico por sobreesfuerzo, lo que provoca hernias y lumbalgias." },
+            { area: "Psicosocial", imagen: "escenario_psicosocial.jpg", pregunta: "Hay constante sobrecarga de tareas, presión excesiva y mala comunicación, generando estrés agudo. ¿Qué tipo de riesgo laboral es este?", opciones: ["Riesgo Psicosocial", "Riesgo Biológico", "Condición Física"], correcta: 0, feedbackErroneo: "Los biológicos son virus/bacterias. Esto afecta directamente la salud mental y emocional.", feedbackAcierto: "¡Muy bien! Es un Riesgo Psicosocial. La mala organización del trabajo afecta gravemente la salud." },
+            { area: "Administrativa", imagen: "escenario_oficina.jpg", pregunta: "Una compañera de oficina pasa 8 horas tecleando con el monitor muy bajo, la espalda encorvada y sin apoyar la zona lumbar. ¿A qué se expone?", opciones: ["Riesgo Ergonómico", "Riesgo Mecánico", "Acto Seguro Autonómo"], correcta: 0, feedbackErroneo: "Incorrecto. No hay partes móviles que causen golpes (Mecánico). Es un problema postural.", feedbackAcierto: "¡Excelente! Es un Riesgo Ergonómico. Las malas posturas prolongadas causan trastornos musculoesqueléticos." }
         ];
 
-        let db, auth, unsubscribeLeaderboard = null;
+        let fbApp, db, auth, unsubscribeLeaderboard = null;
         let appId = 'ferrearmijos-sst';
         let jugadorActual = { nombre: '', area: '', puntaje: 0 };
         let indexPregunta = 0;
-        let isSafariFallback = false; // <-- LA CLAVE PARA IPHONE
+        let isSafariFallback = false;
+
+        // Referencias Firebase
+        let collectionRef, addDocRef, onSnapshotRef, serverTimestampRef;
 
         const ui = {
             loading: document.getElementById('loading-screen'),
@@ -205,12 +172,14 @@
             leaderboard: document.getElementById('leaderboard-screen')
         };
 
-        // INICIALIZACIÓN DE FIREBASE (CON PROTECCIÓN ANTI-SAFARI)
+        // INICIALIZACIÓN DINÁMICA (Escudo Anti-Safari)
         async function initApp() {
-            // Un pequeño tiempo para evitar pantallas en blanco inmediatas en iOS antiguos
-            await new Promise(r => setTimeout(r, 500));
-
             try {
+                // Importación dinámica: Si Safari bloquea la URL, el catch lo atrapa y no rompe la página
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+                const { getAuth, signInAnonymously } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+                const { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+
                 const firebaseConfig = {
                     apiKey: "AIzaSyCNdNVspdLw7789X0voGiRgpSI3eTxGaJA",
                     authDomain: "juego-sst.firebaseapp.com",
@@ -221,24 +190,28 @@
                     measurementId: "G-3H7E3FXHTY"
                 };
 
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
+                fbApp = initializeApp(firebaseConfig);
+                auth = getAuth(fbApp);
+                db = getFirestore(fbApp);
+                
+                // Guardar funciones para usarlas luego
+                collectionRef = collection;
+                addDocRef = addDoc;
+                onSnapshotRef = onSnapshot;
+                serverTimestampRef = serverTimestamp;
 
                 await signInAnonymously(auth); 
-                
-                ui.loading.classList.add('hidden');
-                ui.login.classList.remove('hidden');
+                console.log("Firebase conectado.");
 
             } catch (error) {
-                // SI FIREBASE FALLA (COMO EN IPHONE/SAFARI INCÓGNITO), NO BLOQUEAMOS LA APP
-                console.warn("Firebase bloqueado por el navegador. Activando modo offline.", error);
+                console.warn("Safari/Bloqueador detectado. Activando Modo Local.", error);
                 isSafariFallback = true;
-                
                 document.getElementById('offline-warning').classList.remove('hidden');
-                ui.loading.classList.add('hidden');
-                ui.login.classList.remove('hidden');
             }
+
+            // Mostrar el menú principal pase lo que pase
+            ui.loading.classList.add('hidden');
+            ui.login.classList.remove('hidden');
         }
 
         // LÓGICA DEL JUEGO
@@ -322,75 +295,64 @@
             else finalizarJuego();
         }
 
-        // GUARDADO A PRUEBA DE FALLOS
         async function finalizarJuego() {
             ui.quiz.classList.add('hidden');
             ui.end.classList.remove('hidden');
             document.getElementById('final-score-display').innerText = jugadorActual.puntaje;
 
             if (isSafariFallback) {
-                // Modo seguro: Guardar en la memoria del celular si Firebase fue bloqueado
                 try {
                     let localLeaderboard = JSON.parse(localStorage.getItem('ferrearmijos_local_db') || '[]');
-                    localLeaderboard.push({
-                        nombre: jugadorActual.nombre, area: jugadorActual.area, puntaje: jugadorActual.puntaje
-                    });
+                    localLeaderboard.push({ nombre: jugadorActual.nombre, area: jugadorActual.area, puntaje: jugadorActual.puntaje });
                     localStorage.setItem('ferrearmijos_local_db', JSON.stringify(localLeaderboard));
-                } catch(e) { console.log("Navegador en modo estricto"); }
+                } catch(e) {}
             } else if (auth && auth.currentUser) {
-                // Modo normal: Guardar en la nube
                 try {
-                    const coleccionRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
-                    await addDoc(coleccionRef, {
+                    const cRef = collectionRef(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+                    await addDocRef(cRef, {
                         nombre: jugadorActual.nombre,
                         area: jugadorActual.area,
                         puntaje: jugadorActual.puntaje,
-                        fecha: serverTimestamp(),
+                        fecha: serverTimestampRef(),
                         userId: auth.currentUser.uid
                     });
                 } catch (error) {
-                    console.error("Error al guardar:", error);
+                    console.error("Error guardando en BD:", error);
                 }
             }
         }
 
-        // LEADERBOARD ADAPTATIVO
         window.verLeaderboard = function() {
             ui.login.classList.add('hidden'); ui.quiz.classList.add('hidden'); ui.end.classList.add('hidden');
             ui.leaderboard.classList.remove('hidden'); ui.leaderboard.classList.add('flex');
             const lista = document.getElementById('leaderboard-list');
             
             if (isSafariFallback) {
-                try {
-                    let puntuaciones = JSON.parse(localStorage.getItem('ferrearmijos_local_db') || '[]');
-                    puntuaciones.sort((a, b) => b.puntaje - a.puntaje);
-                    renderizarTabla(puntuaciones, lista);
-                } catch(e) {
-                    lista.innerHTML = '<div class="text-center py-10">Historial no disponible en este dispositivo.</div>';
-                }
+                let puntuaciones = JSON.parse(localStorage.getItem('ferrearmijos_local_db') || '[]');
+                puntuaciones.sort((a, b) => b.puntaje - a.puntaje);
+                renderizarTabla(puntuaciones, lista);
                 return;
             }
 
             lista.innerHTML = '<div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div></div>';
-
             if (!auth || !auth.currentUser) return;
-            const coleccionRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
             
+            const cRef = collectionRef(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
             if (unsubscribeLeaderboard) unsubscribeLeaderboard(); 
 
-            unsubscribeLeaderboard = onSnapshot(coleccionRef, (snapshot) => {
+            unsubscribeLeaderboard = onSnapshotRef(cRef, (snapshot) => {
                 let puntuaciones = [];
                 snapshot.forEach(doc => puntuaciones.push({ id: doc.id, ...doc.data() }));
                 puntuaciones.sort((a, b) => b.puntaje - a.puntaje);
                 renderizarTabla(puntuaciones, lista);
             }, (error) => {
-                lista.innerHTML = `<div class="text-center py-10 text-red-600 font-bold text-sm">Error de sincronización con la nube.</div>`;
+                lista.innerHTML = `<div class="text-center py-10 text-red-600 font-bold text-sm">Error cargando tabla. Verifica reglas de Firebase.</div>`;
             });
         }
 
         function renderizarTabla(puntuaciones, lista) {
             lista.innerHTML = ''; 
-            if(puntuaciones.length === 0) { lista.innerHTML = '<div class="text-center py-10">Aún no hay puntajes registrados.</div>'; return; }
+            if(puntuaciones.length === 0) { lista.innerHTML = '<div class="text-center py-10 text-gray-500">Aún no hay puntajes registrados.</div>'; return; }
 
             puntuaciones.forEach((jugador, index) => {
                 let cMed = 'bg-gray-100 text-gray-600', trf = '';
@@ -398,8 +360,8 @@
                 else if (index === 1) { cMed = 'bg-gray-200 text-gray-700 border-gray-400'; trf = '🥈'; }
                 else if (index === 2) { cMed = 'bg-orange-100 text-orange-800 border-orange-300'; trf = '🥉'; }
                 const item = document.createElement('div');
-                item.className = `flex items-center justify-between p-3 rounded-lg border ${cMed}`;
-                item.innerHTML = `<div class="flex items-center gap-3"><div class="font-bold w-6 text-center">${index + 1}</div><div><div class="font-bold text-gray-900">${jugador.nombre} ${trf}</div><div class="text-xs opacity-80">${jugador.area}</div></div></div><div class="text-lg font-black">${jugador.puntaje} <span class="text-xs font-normal">pts</span></div>`;
+                item.className = `flex items-center justify-between p-3 rounded-lg border bg-white ${cMed}`;
+                item.innerHTML = `<div class="flex items-center gap-3"><div class="font-bold w-6 text-center">${index + 1}</div><div><div class="font-bold text-gray-900">${jugador.nombre} ${trf}</div><div class="text-xs opacity-80 text-gray-600">${jugador.area}</div></div></div><div class="text-lg font-black text-gray-900">${jugador.puntaje} <span class="text-xs font-normal">pts</span></div>`;
                 lista.appendChild(item);
             });
         }
@@ -410,6 +372,7 @@
             document.getElementById('player-name').value = ''; document.getElementById('player-area').value = '';
         }
 
+        // Iniciar al cargar
         window.addEventListener('load', initApp);
     </script>
 </body>
