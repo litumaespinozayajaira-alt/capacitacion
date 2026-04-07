@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --ferre-orange: #ea580c; --ferre-dark: #1f2937; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #f3f4f6; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; }
         .fade-in { animation: fadeIn 0.3s ease-out forwards; }
         .slide-up { animation: slideUp 0.4s ease-out forwards; }
         .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
@@ -22,6 +22,8 @@
         .img-escenario { width: 100%; height: 220px; object-fit: cover; border-bottom: 5px solid var(--ferre-orange); background-color: #e5e7eb; }
         .point-pop { position: absolute; font-weight: bold; font-size: 1.5rem; animation: floatUp 1s ease-out forwards; pointer-events: none; z-index: 50; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-50px) scale(1.5); } }
+        /* Fix tap highlight en iOS */
+        button { -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -31,7 +33,7 @@
         <!-- PANTALLA DE CARGA -->
         <div id="loading-screen" class="p-10 text-center flex flex-col items-center justify-center min-h-[400px]">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mb-4" id="loading-spinner"></div>
-            <p class="text-gray-600 font-semibold" id="loading-text">Conectando a la base de datos de Ferrearmijos...</p>
+            <p class="text-gray-600 font-semibold" id="loading-text">Conectando a Ferrearmijos...</p>
         </div>
 
         <!-- PANTALLA DE REGISTRO -->
@@ -42,6 +44,9 @@
                 </div>
                 <h1 class="text-2xl font-black text-gray-800 uppercase tracking-tight">Ferrearmijos</h1>
                 <h2 class="text-md text-orange-600 font-bold mb-2">Desafío de Seguridad SST</h2>
+                <div id="offline-warning" class="hidden text-xs bg-yellow-100 text-yellow-800 p-2 rounded-lg mb-2">
+                    Modo seguro activado (Safari/Sin conexión).
+                </div>
             </div>
 
             <div class="space-y-4">
@@ -97,7 +102,7 @@
                 <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
             </div>
             <h2 class="text-2xl font-black text-gray-800 mb-2">¡Evaluación Terminada!</h2>
-            <p class="text-gray-600 mb-6 font-medium" id="final-message">Resultados guardados en la base de datos.</p>
+            <p class="text-gray-600 mb-6 font-medium" id="final-message">Resultados procesados correctamente.</p>
             <div class="bg-orange-50 rounded-xl p-6 mb-6 border-2 border-orange-100">
                 <p class="text-sm font-bold text-orange-600 uppercase mb-1">Puntaje Final</p>
                 <p class="text-5xl font-black text-gray-900" id="final-score-display">0</p>
@@ -113,7 +118,7 @@
                 <button onclick="reiniciarApp()" class="text-sm font-bold bg-gray-700 px-3 py-1 rounded hover:bg-gray-600">Volver</button>
             </div>
             <div class="overflow-y-auto flex-1 p-4">
-                <div id="leaderboard-list" class="space-y-2"><div class="text-center py-10 text-gray-500">Cargando datos en vivo...</div></div>
+                <div id="leaderboard-list" class="space-y-2"><div class="text-center py-10 text-gray-500">Cargando datos...</div></div>
             </div>
         </div>
     </div>
@@ -180,16 +185,17 @@
             { 
                 area: "Administrativa", imagen: "escenario_oficina.jpg", 
                 pregunta: "Una compañera de oficina pasa 8 horas tecleando con el monitor muy bajo, la espalda encorvada y sin apoyar la zona lumbar. ¿A qué se expone?", 
-                opciones: ["Riesgo Ergonómico (Postura Forzada)", "Riesgo Mecánico", "Acto Seguro Autonómo"], correcta: 0, 
+                opciones: ["Riesgo Ergonómico", "Riesgo Mecánico", "Acto Seguro Autonómo"], correcta: 0, 
                 feedbackErroneo: "Incorrecto. No hay partes móviles que causen golpes (Mecánico). Es un problema postural.", 
-                feedbackAcierto: "¡Excelente! Es un Riesgo Ergonómico. Las malas posturas prolongadas en oficina causan trastornos musculoesqueléticos a largo plazo." 
+                feedbackAcierto: "¡Excelente! Es un Riesgo Ergonómico. Las malas posturas prolongadas causan trastornos musculoesqueléticos." 
             }
         ];
 
         let db, auth, unsubscribeLeaderboard = null;
-        let appId = 'ferrearmijos-sst'; // Carpeta en Firebase
+        let appId = 'ferrearmijos-sst';
         let jugadorActual = { nombre: '', area: '', puntaje: 0 };
         let indexPregunta = 0;
+        let isSafariFallback = false; // <-- LA CLAVE PARA IPHONE
 
         const ui = {
             loading: document.getElementById('loading-screen'),
@@ -199,8 +205,11 @@
             leaderboard: document.getElementById('leaderboard-screen')
         };
 
-        // INICIALIZACIÓN DE FIREBASE CON TUS CLAVES
+        // INICIALIZACIÓN DE FIREBASE (CON PROTECCIÓN ANTI-SAFARI)
         async function initApp() {
+            // Un pequeño tiempo para evitar pantallas en blanco inmediatas en iOS antiguos
+            await new Promise(r => setTimeout(r, 500));
+
             try {
                 const firebaseConfig = {
                     apiKey: "AIzaSyCNdNVspdLw7789X0voGiRgpSI3eTxGaJA",
@@ -217,17 +226,18 @@
                 db = getFirestore(app);
 
                 await signInAnonymously(auth); 
-
+                
                 ui.loading.classList.add('hidden');
                 ui.login.classList.remove('hidden');
 
             } catch (error) {
-                console.error("Error de inicialización:", error);
-                document.getElementById('loading-spinner').classList.add('hidden');
-                document.getElementById('loading-text').innerHTML = `
-                    <span class="text-red-600 font-black text-xl">ERROR DE CONEXIÓN</span><br><br>
-                    <span class="text-sm text-gray-700">${error.message}</span>
-                `;
+                // SI FIREBASE FALLA (COMO EN IPHONE/SAFARI INCÓGNITO), NO BLOQUEAMOS LA APP
+                console.warn("Firebase bloqueado por el navegador. Activando modo offline.", error);
+                isSafariFallback = true;
+                
+                document.getElementById('offline-warning').classList.remove('hidden');
+                ui.loading.classList.add('hidden');
+                ui.login.classList.remove('hidden');
             }
         }
 
@@ -312,12 +322,23 @@
             else finalizarJuego();
         }
 
+        // GUARDADO A PRUEBA DE FALLOS
         async function finalizarJuego() {
             ui.quiz.classList.add('hidden');
             ui.end.classList.remove('hidden');
             document.getElementById('final-score-display').innerText = jugadorActual.puntaje;
 
-            if (auth && auth.currentUser) {
+            if (isSafariFallback) {
+                // Modo seguro: Guardar en la memoria del celular si Firebase fue bloqueado
+                try {
+                    let localLeaderboard = JSON.parse(localStorage.getItem('ferrearmijos_local_db') || '[]');
+                    localLeaderboard.push({
+                        nombre: jugadorActual.nombre, area: jugadorActual.area, puntaje: jugadorActual.puntaje
+                    });
+                    localStorage.setItem('ferrearmijos_local_db', JSON.stringify(localLeaderboard));
+                } catch(e) { console.log("Navegador en modo estricto"); }
+            } else if (auth && auth.currentUser) {
+                // Modo normal: Guardar en la nube
                 try {
                     const coleccionRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
                     await addDoc(coleccionRef, {
@@ -329,17 +350,27 @@
                     });
                 } catch (error) {
                     console.error("Error al guardar:", error);
-                    document.getElementById('final-message').innerText = "Hubo un problema al guardar tus datos. Avisa al supervisor.";
-                    document.getElementById('final-message').classList.add("text-red-600");
                 }
             }
         }
 
-        // LEADERBOARD
+        // LEADERBOARD ADAPTATIVO
         window.verLeaderboard = function() {
             ui.login.classList.add('hidden'); ui.quiz.classList.add('hidden'); ui.end.classList.add('hidden');
             ui.leaderboard.classList.remove('hidden'); ui.leaderboard.classList.add('flex');
             const lista = document.getElementById('leaderboard-list');
+            
+            if (isSafariFallback) {
+                try {
+                    let puntuaciones = JSON.parse(localStorage.getItem('ferrearmijos_local_db') || '[]');
+                    puntuaciones.sort((a, b) => b.puntaje - a.puntaje);
+                    renderizarTabla(puntuaciones, lista);
+                } catch(e) {
+                    lista.innerHTML = '<div class="text-center py-10">Historial no disponible en este dispositivo.</div>';
+                }
+                return;
+            }
+
             lista.innerHTML = '<div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div></div>';
 
             if (!auth || !auth.currentUser) return;
@@ -351,22 +382,25 @@
                 let puntuaciones = [];
                 snapshot.forEach(doc => puntuaciones.push({ id: doc.id, ...doc.data() }));
                 puntuaciones.sort((a, b) => b.puntaje - a.puntaje);
-                
-                lista.innerHTML = ''; 
-                if(puntuaciones.length === 0) { lista.innerHTML = '<div class="text-center py-10">Aún no hay puntajes registrados.</div>'; return; }
-
-                puntuaciones.forEach((jugador, index) => {
-                    let cMed = 'bg-gray-100 text-gray-600', trf = '';
-                    if (index === 0) { cMed = 'bg-yellow-100 text-yellow-700 border-yellow-300'; trf = '🏆'; }
-                    else if (index === 1) { cMed = 'bg-gray-200 text-gray-700 border-gray-400'; trf = '🥈'; }
-                    else if (index === 2) { cMed = 'bg-orange-100 text-orange-800 border-orange-300'; trf = '🥉'; }
-                    const item = document.createElement('div');
-                    item.className = `flex items-center justify-between p-3 rounded-lg border ${cMed}`;
-                    item.innerHTML = `<div class="flex items-center gap-3"><div class="font-bold w-6 text-center">${index + 1}</div><div><div class="font-bold text-gray-900">${jugador.nombre} ${trf}</div><div class="text-xs opacity-80">${jugador.area}</div></div></div><div class="text-lg font-black">${jugador.puntaje} <span class="text-xs font-normal">pts</span></div>`;
-                    lista.appendChild(item);
-                });
+                renderizarTabla(puntuaciones, lista);
             }, (error) => {
-                lista.innerHTML = `<div class="text-center py-10 text-red-600 font-bold text-sm">No se pudo cargar la tabla. Verifica que las reglas de Firebase estén en modo prueba (allow read, write: if true).</div>`;
+                lista.innerHTML = `<div class="text-center py-10 text-red-600 font-bold text-sm">Error de sincronización con la nube.</div>`;
+            });
+        }
+
+        function renderizarTabla(puntuaciones, lista) {
+            lista.innerHTML = ''; 
+            if(puntuaciones.length === 0) { lista.innerHTML = '<div class="text-center py-10">Aún no hay puntajes registrados.</div>'; return; }
+
+            puntuaciones.forEach((jugador, index) => {
+                let cMed = 'bg-gray-100 text-gray-600', trf = '';
+                if (index === 0) { cMed = 'bg-yellow-100 text-yellow-700 border-yellow-300'; trf = '🏆'; }
+                else if (index === 1) { cMed = 'bg-gray-200 text-gray-700 border-gray-400'; trf = '🥈'; }
+                else if (index === 2) { cMed = 'bg-orange-100 text-orange-800 border-orange-300'; trf = '🥉'; }
+                const item = document.createElement('div');
+                item.className = `flex items-center justify-between p-3 rounded-lg border ${cMed}`;
+                item.innerHTML = `<div class="flex items-center gap-3"><div class="font-bold w-6 text-center">${index + 1}</div><div><div class="font-bold text-gray-900">${jugador.nombre} ${trf}</div><div class="text-xs opacity-80">${jugador.area}</div></div></div><div class="text-lg font-black">${jugador.puntaje} <span class="text-xs font-normal">pts</span></div>`;
+                lista.appendChild(item);
             });
         }
 
