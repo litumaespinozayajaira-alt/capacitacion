@@ -81,7 +81,7 @@
             
             <div class="p-5">
                 <div class="flex justify-between items-center mb-3">
-                    <span class="text-xs font-bold text-gray-500 uppercase" id="scenario-counter">Caso 1/7</span>
+                    <span class="text-xs font-bold text-gray-500 uppercase" id="scenario-counter">Caso 1/8</span>
                     <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-0.5 rounded border border-orange-200" id="area-tag">Bodega</span>
                 </div>
                 <h3 id="question-text" class="text-lg font-bold text-gray-800 mb-4 leading-tight">¿Pregunta?</h3>
@@ -97,7 +97,7 @@
                 <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
             </div>
             <h2 class="text-2xl font-black text-gray-800 mb-2">¡Evaluación Terminada!</h2>
-            <p class="text-gray-600 mb-6 font-medium">Resultados guardados.</p>
+            <p class="text-gray-600 mb-6 font-medium" id="final-message">Resultados guardados en la base de datos.</p>
             <div class="bg-orange-50 rounded-xl p-6 mb-6 border-2 border-orange-100">
                 <p class="text-sm font-bold text-orange-600 uppercase mb-1">Puntaje Final</p>
                 <p class="text-5xl font-black text-gray-900" id="final-score-display">0</p>
@@ -113,7 +113,7 @@
                 <button onclick="reiniciarApp()" class="text-sm font-bold bg-gray-700 px-3 py-1 rounded hover:bg-gray-600">Volver</button>
             </div>
             <div class="overflow-y-auto flex-1 p-4">
-                <div id="leaderboard-list" class="space-y-2"><div class="text-center py-10 text-gray-500">Cargando...</div></div>
+                <div id="leaderboard-list" class="space-y-2"><div class="text-center py-10 text-gray-500">Cargando datos en vivo...</div></div>
             </div>
         </div>
     </div>
@@ -124,14 +124,66 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // ==========================================
+        // PREGUNTAS Y ESCENARIOS (8 EN TOTAL)
+        // ==========================================
         const escenarios = [
-            { area: "Bodega", imagen: "escenario_bodega.jpg", pregunta: "Estás en bodega y observas que se han apilado cajas fuertes pesadas superando el límite de peso visible. ¿Qué identificas aquí?", opciones: ["Un Acto Inseguro", "Una Condición Insegura", "Un Incidente"], correcta: 1, feedbackErroneo: "Es el entorno físico de la percha, por lo tanto es una Condición Insegura.", feedbackAcierto: "¡Excelente! Es una Condición Insegura." },
-            { area: "Choferes", imagen: "escenario_chofer.jpg", pregunta: "Un chofer sube al camión pisando la llanta mojada sin usar los tres puntos de apoyo. Esta acción es...", opciones: ["Enfermedad Ocupacional", "Condición Insegura", "Acto Inseguro"], correcta: 2, feedbackErroneo: "La PERSONA omite la norma, es su acción.", feedbackAcierto: "¡Correcto! Es un Acto Inseguro." },
-            { area: "Ventas", imagen: "escenario_pasillo.jpg", pregunta: "Un cliente derramó aceite. ¿Qué representa el aceite en el piso?", opciones: ["Riesgo de Caída", "Un Peligro", "Un Accidente"], correcta: 1, feedbackErroneo: "El riesgo es la caída, el aceite es la fuente.", feedbackAcierto: "¡Bien hecho! El aceite es el PELIGRO." },
-            { area: "Seguridad", imagen: "escenario_extintor.jpg", pregunta: "Un estante bloquea el acceso al extintor. Esto es:", opciones: ["Acto Inseguro", "Condición Insegura", "No hay problema"], correcta: 1, feedbackErroneo: "Altera el entorno de forma física.", feedbackAcierto: "¡Exacto! Es una Condición Insegura." },
-            { area: "General", imagen: "escenario_herramienta.jpg", pregunta: "Te dan un estilete sin seguro y roto. ¿Qué debes hacer?", opciones: ["Usarlo con cuidado", "Ponerle cinta", "Reportarlo y cambiarlo"], correcta: 2, feedbackErroneo: "Usar herramientas defectuosas causa accidentes graves.", feedbackAcierto: "¡Correcto! Repórtalo inmediatamente." },
-            { area: "Cargas", imagen: "escenario_cargas.jpg", pregunta: "Al levantar 25kg doblas la espalda sin flexionar rodillas. ¿Qué riesgo enfrentas?", opciones: ["Riesgo Físico", "Riesgo Ergonómico", "Riesgo Mecánico"], correcta: 1, feedbackErroneo: "Es un problema de postura.", feedbackAcierto: "¡Correcto! Es un Riesgo Ergonómico." },
-            { area: "Psicosocial", imagen: "escenario_psicosocial.jpg", pregunta: "Hay sobrecarga de tareas y presión generando estrés agudo. ¿Qué riesgo es?", opciones: ["Riesgo Psicosocial", "Riesgo Biológico", "Condición Física"], correcta: 0, feedbackErroneo: "Afecta la salud mental y emocional.", feedbackAcierto: "¡Muy bien! Es un Riesgo Psicosocial." }
+            { 
+                area: "Bodega", imagen: "escenario_bodega.jpg", 
+                pregunta: "Estás en bodega y observas que se han apilado cajas fuertes pesadas superando el límite de peso visible de la percha. ¿Qué identificas aquí?", 
+                opciones: ["Un Acto Inseguro", "Una Condición Insegura", "Un Incidente"], correcta: 1, 
+                feedbackErroneo: "Es el estado del entorno físico de la percha, por lo tanto es una Condición Insegura.", 
+                feedbackAcierto: "¡Excelente! Es una Condición Insegura porque el estante presenta riesgo de colapso." 
+            },
+            { 
+                area: "Choferes", imagen: "escenario_chofer.jpg", 
+                pregunta: "Un chofer sube al camión pisando la llanta mojada en lugar de usar los estribos y los tres puntos de apoyo. Esta acción es...", 
+                opciones: ["Enfermedad Ocupacional", "Condición Insegura", "Acto Inseguro"], correcta: 2, 
+                feedbackErroneo: "La PERSONA es quien decide omitir la norma de seguridad al subir, es su acción.", 
+                feedbackAcierto: "¡Correcto! Es un Acto Inseguro que puede provocar una caída a distinto nivel." 
+            },
+            { 
+                area: "Ventas", imagen: "escenario_pasillo.jpg", 
+                pregunta: "En el pasillo principal, un cliente derramó aceite lubricante. ¿Qué representa exactamente el aceite en el piso?", 
+                opciones: ["Riesgo de Caída", "Un Peligro", "Un Accidente"], correcta: 1, 
+                feedbackErroneo: "El riesgo es la probabilidad de caída, pero la sustancia en sí misma es la fuente.", 
+                feedbackAcierto: "¡Bien hecho! El aceite es el PELIGRO (la fuente o situación que puede causar el daño)." 
+            },
+            { 
+                area: "Seguridad", imagen: "escenario_extintor.jpg", 
+                pregunta: "Un nuevo estante de exhibición bloquea por completo el acceso al extintor. Esto es:", 
+                opciones: ["Acto Inseguro", "Condición Insegura", "No hay problema si no hay fuego"], correcta: 1, 
+                feedbackErroneo: "Bloquear equipos de emergencia altera el entorno de forma física y permanente.", 
+                feedbackAcierto: "¡Exacto! Es una Condición Insegura. Los extintores siempre deben estar libres de obstáculos." 
+            },
+            { 
+                area: "General", imagen: "escenario_herramienta.jpg", 
+                pregunta: "Te dan un estilete (cutter) que no tiene seguro en la cuchilla y el mango está roto. ¿Qué debes hacer?", 
+                opciones: ["Usarlo con cuidado", "Ponerle cinta adhesiva", "Reportarlo y solicitar cambio"], correcta: 2, 
+                feedbackErroneo: "Usar herramientas hechizas o defectuosas causa accidentes graves como cortes profundos.", 
+                feedbackAcierto: "¡Correcto! Reportar herramientas en mal estado es el paso #1 de la seguridad preventiva." 
+            },
+            { 
+                area: "Cargas", imagen: "escenario_cargas.jpg", 
+                pregunta: "Al levantar una caja de 25kg, doblas la espalda (como una grúa) en lugar de flexionar las rodillas. ¿Qué riesgo enfrentas principalmente?", 
+                opciones: ["Riesgo Físico", "Riesgo Ergonómico", "Riesgo Mecánico"], correcta: 1, 
+                feedbackErroneo: "No es exposición a temperatura o ruido (Físico), es un problema de mala postura y esfuerzo.", 
+                feedbackAcierto: "¡Correcto! Es un Riesgo Ergonómico por sobreesfuerzo, lo que provoca hernias y lumbalgias." 
+            },
+            { 
+                area: "Psicosocial", imagen: "escenario_psicosocial.jpg", 
+                pregunta: "Hay constante sobrecarga de tareas, presión excesiva y mala comunicación, generando estrés agudo. ¿Qué tipo de riesgo laboral es este?", 
+                opciones: ["Riesgo Psicosocial", "Riesgo Biológico", "Condición Física"], correcta: 0, 
+                feedbackErroneo: "Los biológicos son virus/bacterias. Esto afecta directamente la salud mental y emocional.", 
+                feedbackAcierto: "¡Muy bien! Es un Riesgo Psicosocial. La mala organización del trabajo afecta gravemente la salud." 
+            },
+            { 
+                area: "Administrativa", imagen: "escenario_oficina.jpg", 
+                pregunta: "Una compañera de oficina pasa 8 horas tecleando con el monitor muy bajo, la espalda encorvada y sin apoyar la zona lumbar. ¿A qué se expone?", 
+                opciones: ["Riesgo Ergonómico (Postura Forzada)", "Riesgo Mecánico", "Acto Seguro Autonómo"], correcta: 0, 
+                feedbackErroneo: "Incorrecto. No hay partes móviles que causen golpes (Mecánico). Es un problema postural.", 
+                feedbackAcierto: "¡Excelente! Es un Riesgo Ergonómico. Las malas posturas prolongadas en oficina causan trastornos musculoesqueléticos a largo plazo." 
+            }
         ];
 
         let db, auth, unsubscribeLeaderboard = null;
@@ -147,46 +199,35 @@
             leaderboard: document.getElementById('leaderboard-screen')
         };
 
-        // INICIALIZACIÓN DE FIREBASE (AQUÍ ESTÁ EL DETECTOR DE ERRORES)
+        // INICIALIZACIÓN DE FIREBASE CON TUS CLAVES
         async function initApp() {
             try {
-                // ==============================================================================
-                // REEMPLAZA ESTO CON TUS CLAVES EXACTAS DE FIREBASE
-                // ==============================================================================
                 const firebaseConfig = {
-                     apiKey: "AIzaSyCNdNVspdLw7789X0voGiRgpSI3eTxGaJA",
-  authDomain: "juego-sst.firebaseapp.com",
-  projectId: "juego-sst",
-  storageBucket: "juego-sst.firebasestorage.app",
-  messagingSenderId: "393157179406",
-  appId: "1:393157179406:web:2833b8a78b7345dc53245f",
-  measurementId: "G-3H7E3FXHTY"
+                    apiKey: "AIzaSyCNdNVspdLw7789X0voGiRgpSI3eTxGaJA",
+                    authDomain: "juego-sst.firebaseapp.com",
+                    projectId: "juego-sst",
+                    storageBucket: "juego-sst.firebasestorage.app",
+                    messagingSenderId: "393157179406",
+                    appId: "1:393157179406:web:2833b8a78b7345dc53245f",
+                    measurementId: "G-3H7E3FXHTY"
                 };
-                // ==============================================================================
-
-                if (firebaseConfig.apiKey === "TU_API_KEY" || !firebaseConfig.apiKey) {
-                    throw new Error("⚠️ OLVIDASTE PONER TUS CLAVES: Reemplaza TU_API_KEY en el código.");
-                }
 
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                await signInAnonymously(auth); // Conexión anónima permitida
+                await signInAnonymously(auth); 
 
                 ui.loading.classList.add('hidden');
                 ui.login.classList.remove('hidden');
 
             } catch (error) {
-                // SI ALGO FALLA, ESTO TE LO GRITARÁ EN LA PANTALLA
-                console.error("ERROR CRÍTICO:", error);
+                console.error("Error de inicialización:", error);
                 document.getElementById('loading-spinner').classList.add('hidden');
                 document.getElementById('loading-text').innerHTML = `
-                    <span class="text-red-600 font-black text-xl">¡ERROR DE CONEXIÓN!</span><br><br>
-                    <span class="text-sm text-gray-700">${error.message}</span><br><br>
-                    <span class="text-xs text-gray-500">Revisa la consola (F12) o tus claves en el código.</span>
+                    <span class="text-red-600 font-black text-xl">ERROR DE CONEXIÓN</span><br><br>
+                    <span class="text-sm text-gray-700">${error.message}</span>
                 `;
-                alert("Hubo un error conectando a Firebase: " + error.message);
             }
         }
 
@@ -286,9 +327,10 @@
                         fecha: serverTimestamp(),
                         userId: auth.currentUser.uid
                     });
-                    console.log("¡Guardado exitoso en Firebase!");
                 } catch (error) {
-                    alert("No se pudo guardar en la base de datos. Motivo: " + error.message);
+                    console.error("Error al guardar:", error);
+                    document.getElementById('final-message').innerText = "Hubo un problema al guardar tus datos. Avisa al supervisor.";
+                    document.getElementById('final-message').classList.add("text-red-600");
                 }
             }
         }
@@ -298,7 +340,7 @@
             ui.login.classList.add('hidden'); ui.quiz.classList.add('hidden'); ui.end.classList.add('hidden');
             ui.leaderboard.classList.remove('hidden'); ui.leaderboard.classList.add('flex');
             const lista = document.getElementById('leaderboard-list');
-            lista.innerHTML = '<div class="text-center py-10">Cargando...</div>';
+            lista.innerHTML = '<div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div></div>';
 
             if (!auth || !auth.currentUser) return;
             const coleccionRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
@@ -311,20 +353,20 @@
                 puntuaciones.sort((a, b) => b.puntaje - a.puntaje);
                 
                 lista.innerHTML = ''; 
-                if(puntuaciones.length === 0) { lista.innerHTML = '<div class="text-center py-10">Sin registros.</div>'; return; }
+                if(puntuaciones.length === 0) { lista.innerHTML = '<div class="text-center py-10">Aún no hay puntajes registrados.</div>'; return; }
 
                 puntuaciones.forEach((jugador, index) => {
                     let cMed = 'bg-gray-100 text-gray-600', trf = '';
-                    if (index === 0) { cMed = 'bg-yellow-100 text-yellow-700'; trf = '🏆'; }
-                    else if (index === 1) { cMed = 'bg-gray-200 text-gray-700'; trf = '🥈'; }
-                    else if (index === 2) { cMed = 'bg-orange-100 text-orange-800'; trf = '🥉'; }
+                    if (index === 0) { cMed = 'bg-yellow-100 text-yellow-700 border-yellow-300'; trf = '🏆'; }
+                    else if (index === 1) { cMed = 'bg-gray-200 text-gray-700 border-gray-400'; trf = '🥈'; }
+                    else if (index === 2) { cMed = 'bg-orange-100 text-orange-800 border-orange-300'; trf = '🥉'; }
                     const item = document.createElement('div');
                     item.className = `flex items-center justify-between p-3 rounded-lg border ${cMed}`;
-                    item.innerHTML = `<div class="flex items-center gap-3"><div class="font-bold w-6 text-center">${index + 1}</div><div><div class="font-bold">${jugador.nombre} ${trf}</div><div class="text-xs">${jugador.area}</div></div></div><div class="text-lg font-black">${jugador.puntaje} pts</div>`;
+                    item.innerHTML = `<div class="flex items-center gap-3"><div class="font-bold w-6 text-center">${index + 1}</div><div><div class="font-bold text-gray-900">${jugador.nombre} ${trf}</div><div class="text-xs opacity-80">${jugador.area}</div></div></div><div class="text-lg font-black">${jugador.puntaje} <span class="text-xs font-normal">pts</span></div>`;
                     lista.appendChild(item);
                 });
             }, (error) => {
-                alert("Error cargando tabla: " + error.message);
+                lista.innerHTML = `<div class="text-center py-10 text-red-600 font-bold text-sm">No se pudo cargar la tabla. Verifica que las reglas de Firebase estén en modo prueba (allow read, write: if true).</div>`;
             });
         }
 
