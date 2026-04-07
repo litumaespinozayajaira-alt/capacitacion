@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capacitación SST - Ferrearmijos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --ferre-orange: #ea580c; /* Naranja industrial */
+            --ferre-dark: #1f2937;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #f3f4f6; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .slide-up { animation: slideUp 0.4s ease-out forwards; }
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .img-escenario {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-bottom: 5px solid var(--ferre-orange);
+            background-color: #e5e7eb; /* Color de fondo por si la imagen tarda en cargar */
+        }
+
+        /* Animaciones para los puntos */
+        .point-pop {
+            position: absolute;
+            font-weight: bold;
+            font-size: 1.5rem;
+            animation: floatUp 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 50;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="max-w-md w-full bg-white rounded-xl shadow-2xl overflow-hidden relative" id="app-container">
+        
+        <!-- PANTALLA DE CARGA -->
+        <div id="loading-screen" class="p-10 text-center flex flex-col items-center justify-center min-h-[400px]">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mb-4"></div>
+            <p class="text-gray-600 font-semibold">Conectando a la base de datos de Ferrearmijos...</p>
+        </div>
+
+        <!-- PANTALLA DE REGISTRO (LOGIN) -->
+        <div id="login-screen" class="hidden p-8 slide-up">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-orange-600 text-white rounded-lg flex items-center justify-center mx-auto mb-4 shadow-md rotate-3">
+                    <svg class="w-10 h-10 -rotate-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+                <h1 class="text-2xl font-black text-gray-800 uppercase tracking-tight">Ferrearmijos</h1>
+                <h2 class="text-md text-orange-600 font-bold mb-2">Desafío de Seguridad SST</h2>
+                <p class="text-sm text-gray-500">Regístrate para competir en la tabla general.</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Tu Nombre y Apellido</label>
+                    <input type="text" id="player-name" placeholder="Ej. Juan Pérez" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition shadow-sm outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Área de Trabajo</label>
+                    <select id="player-area" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition shadow-sm outline-none bg-white">
+                        <option value="">Selecciona tu área...</option>
+                        <!-- NUEVAS ÁREAS -->
+                        <option value="Administrativa">Administrativa</option>
+                        <option value="Ventas">Ventas</option>
+                        <option value="Chofer de Ventas">Chofer de Ventas</option>
+                        <option value="Bodega">Bodega</option>
+                        <option value="Chofer de Bodega">Chofer de Bodega</option>
+                        <option value="Ventas Mayoristas">Ventas Mayoristas</option>
+                        <option value="Seguridad">Seguridad</option>
+                    </select>
+                </div>
+                <button onclick="iniciarJuego()" class="w-full mt-4 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-lg flex justify-center items-center">
+                    Comenzar Capacitación
+                </button>
+                <button onclick="verLeaderboard()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg transition duration-200 shadow-sm mt-2">
+                    Ver Tabla de Posiciones
+                </button>
+            </div>
+        </div>
+
+        <!-- PANTALLA DE JUEGO -->
+        <div id="quiz-screen" class="hidden relative">
+            <div class="absolute top-2 right-2 bg-gray-900 text-white px-3 py-1 rounded-full font-bold text-sm z-10 shadow-md flex items-center gap-2">
+                <span>Puntos:</span>
+                <span id="score-display" class="text-orange-400 text-lg">0</span>
+            </div>
+            
+            <div class="bg-gray-200 h-1.5 w-full">
+                <div id="progress-bar" class="bg-orange-500 h-1.5 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            
+            <!-- AQUI SE CARGA LA IMAGEN -->
+            <img id="scenario-image" src="" alt="Escenario Ferretería" class="img-escenario" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1541888086425-d81bb19240f5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'; console.log('Imagen local no encontrada, cargando placeholder');">
+            
+            <div class="p-5">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider" id="scenario-counter">Caso 1/7</span>
+                    <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-0.5 rounded border border-orange-200" id="area-tag">Bodega</span>
+                </div>
+                
+                <h3 id="question-text" class="text-lg font-bold text-gray-800 mb-4 leading-tight">¿Pregunta?</h3>
+                
+                <div id="options-container" class="space-y-2">
+                    <!-- Botones -->
+                </div>
+
+                <div id="feedback-box" class="mt-4 hidden rounded-lg p-3 text-sm font-bold border"></div>
+
+                <button id="next-btn" onclick="siguientePregunta()" class="mt-4 w-full bg-gray-900 hover:bg-black text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-md hidden">
+                    Siguiente Escenario ➔
+                </button>
+            </div>
+        </div>
+
+        <!-- PANTALLA FINAL -->
+        <div id="end-screen" class="hidden p-8 text-center slide-up">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h2 class="text-2xl font-black text-gray-800 mb-2">¡Evaluación Terminada!</h2>
+            <p class="text-gray-600 mb-6 font-medium">Tus resultados han sido guardados en la base de datos de Ferrearmijos.</p>
+            
+            <div class="bg-orange-50 rounded-xl p-6 mb-6 border-2 border-orange-100">
+                <p class="text-sm font-bold text-orange-600 uppercase mb-1">Puntaje Final</p>
+                <p class="text-5xl font-black text-gray-900" id="final-score-display">0</p>
+                <p class="text-xs text-gray-500 mt-2">Puntos (+2 aciertos, -1 errores)</p>
+            </div>
+
+            <button onclick="verLeaderboard()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-md mb-3">
+                Ver Tabla de Posiciones
+            </button>
+            <button onclick="reiniciarApp()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg transition duration-200">
+                Salir
+            </button>
+        </div>
+
+        <!-- PANTALLA LEADERBOARD -->
+        <div id="leaderboard-screen" class="hidden flex-col h-[600px] max-h-screen bg-gray-50">
+            <div class="bg-gray-900 p-4 text-white flex justify-between items-center shadow-md">
+                <h2 class="text-lg font-bold flex items-center gap-2">
+                    <svg class="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    Top Ferrearmijos
+                </h2>
+                <button onclick="reiniciarApp()" class="text-sm font-bold bg-gray-700 px-3 py-1 rounded hover:bg-gray-600">Volver</button>
+            </div>
+            
+            <div class="overflow-y-auto flex-1 p-4">
+                <div id="leaderboard-list" class="space-y-2">
+                    <div class="text-center py-10 text-gray-500">Cargando puntajes...</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FIREBASE SDKS -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ==========================================
+        // PREGUNTAS Y ESCENARIOS (7 EN TOTAL)
+        // ==========================================
+        const escenarios = [
+            {
+                area: "Bodega",
+                imagen: "escenario_bodega.jpg", // <--- REEMPLAZAR CON TU FOTO LOCAL
+                pregunta: "Estás en bodega y observas que se han apilado cajas fuertes pesadas en el último estante superior de la percha, superando el límite de peso visible. ¿Qué identificas aquí?",
+                opciones: ["Un Acto Inseguro", "Una Condición Insegura", "Un Incidente", "Un Riesgo Aceptable"],
+                correcta: 1, 
+                feedbackErroneo: "Recuerda: El acto fue de quien las puso, pero lo que tú estás observando en el entorno físico de la percha es una Condición Insegura.",
+                feedbackAcierto: "¡Excelente! Es una Condición Insegura porque el entorno de trabajo presenta un peligro inminente de caída de objetos."
+            },
+            {
+                area: "Choferes de Bodega / Ventas",
+                imagen: "escenario_chofer.jpg", // <--- REEMPLAZAR CON TU FOTO LOCAL
+                pregunta: "Un chofer de ventas sube al cajón de su camión pisando la llanta mojada en lugar de usar los estribos y manijas de tres puntos de apoyo. Esta acción es...",
+                opciones: ["Una Enfermedad Ocupacional", "Una Condición Insegura", "Un Acto Inseguro"],
+                correcta: 2, 
+                feedbackErroneo: "Esa no es la respuesta. Aquí es la PERSONA la que está omitiendo la norma de usar los tres puntos de apoyo, por lo tanto, la responsabilidad recae en su acción.",
+                feedbackAcierto: "¡Correcto! Es un Acto Inseguro. El chofer está adoptando una práctica incorrecta que puede generarle una caída a distinto nivel."
+            },
+            {
+                area: "Ventas / Mayoristas",
+                imagen: "escenario_pasillo.jpg", // <--- REEMPLAZAR CON TU FOTO LOCAL
+                pregunta: "En el pasillo principal, un cliente derramó aceite lubricante. El derrame aún no se ha limpiado y no hay señalización. ¿Qué representa exactamente el aceite derramado en el piso?",
+                opciones: ["Un Riesgo de Caída", "Un Peligro", "Un Accidente"],
+                correcta: 1, 
+                feedbackErroneo: "Ojo: El riesgo es la probabilidad (que alguien se caiga), pero el aceite en sí mismo (la fuente del daño en el piso) tiene otro nombre.",
+                feedbackAcierto: "¡Bien hecho! El aceite es el PELIGRO (la fuente o situación). El Riesgo sería que un cliente o vendedor resbale."
+            },
+            {
+                area: "Administrativa / Seguridad",
+                imagen: "escenario_extintor.jpg", // <--- REEMPLAZAR CON TU FOTO LOCAL
+                pregunta: "Un estante exhibidor nuevo con taladros y amoladoras ha sido colocado bloqueando totalmente el acceso al extintor del área de ventas mayoristas. Esto es:",
+                opciones: ["Un Acto Inseguro", "Una Condición Insegura", "No es problema si no hay fuego"],
+                correcta: 1, 
+                feedbackErroneo: "No. Bloquear un equipo de emergencia altera el entorno de forma física y permanente hasta que se mueva. Es un tema del área (condición).",
+                feedbackAcierto: "¡Exacto! Es una Condición Insegura grave. Los extintores siempre deben estar libres de obstáculos y señalizados."
+            },
+            {
+                area: "General",
+                imagen: "escenario_herramienta.jpg", // <--- REEMPLAZAR CON TU FOTO LOCAL
+                pregunta: "Al preparar un pedido, notas que el estilete (cutter) que te dieron no tiene seguro en la cuchilla y el mango está roto. ¿Qué debes hacer?",
+                opciones: ["Usarlo con mucho cuidado", "Ponerle cinta adhesiva y seguir despachando", "Reportarlo como equipo defectuoso y solicitar cambio"],
+                correcta: 2, 
+                feedbackErroneo: "Pésima decisión. Usar herramientas hechizas o defectuosas es la principal causa de cortes profundos en manos.",
+                feedbackAcierto: "¡Correcto! Nunca se deben usar herramientas de mano en mal estado, repórtalo inmediatamente."
+            },
+            {
+                area: "Levantamiento de Cargas", // NUEVO ESCENARIO
+                imagen: "escenario_cargas.jpg", // <--- REEMPLAZAR CON TU FOTO LOCAL
+                pregunta: "Al levantar una caja de 25kg con cerraduras, doblas la espalda (como una grúa) en lugar de flexionar las rodillas manteniendo la espalda recta. ¿Qué tipo de riesgo estás enfrentando principalmente?",
+                opciones: ["Riesgo Físico (por el clima)", "Riesgo Ergonómico (sobreesfuerzo)", "Riesgo Mecánico (golpe)"],
+                correcta: 1, 
+                feedbackErroneo: "Incorrecto. No estás expuesto al clima ni es un golpe de una máquina. Es un problema de postura y fuerza.",
+                feedbackAcierto: "¡Correcto! Es un Riesgo Ergonómico por manejo manual de cargas inadecuado, lo que provoca lesiones lumbares agudas."
+            },
+            {
+                area: "Riesgos Psicosociales", // NUEVO ESCENARIO
+                imagen: "escenario_psicosocial.jpg", // <--- REEMPLAZAR CON TU FOTO LOCAL
+                pregunta: "En el área Administrativa y Ventas, hay constante sobrecarga de tareas, presión excesiva de tiempo, y mala comunicación entre compañeros, generando estrés agudo. ¿Qué tipo de riesgo es este?",
+                opciones: ["Riesgo Psicosocial", "Riesgo Biológico", "Condición Insegura Física"],
+                correcta: 0, 
+                feedbackErroneo: "Incorrecto. Los riesgos biológicos son virus/bacterias, y una condición insegura física sería un cable pelado. Esto afecta la salud mental y emocional.",
+                feedbackAcierto: "¡Muy bien! Es un Riesgo Psicosocial. El estrés laboral crónico provocado por la organización del trabajo afecta gravemente la salud."
+            }
+        ];
+
+        // ==========================================
+        // CONFIGURACIÓN FIREBASE & ESTADO GLOBAL
+        // ==========================================
+        let db;
+        let auth;
+        let unsubscribeLeaderboard = null;
+        let appId = typeof __app_id !== 'undefined' ? __app_id : 'ferrearmijos-sst-v2';
+        let modoLocal = false; // <-- NUEVO: Para que funcione en GitHub sin romperse
+        
+        let jugadorActual = { nombre: '', area: '', puntaje: 0 };
+        let indexPregunta = 0;
+
+        const ui = {
+            loading: document.getElementById('loading-screen'),
+            login: document.getElementById('login-screen'),
+            quiz: document.getElementById('quiz-screen'),
+            end: document.getElementById('end-screen'),
+            leaderboard: document.getElementById('leaderboard-screen')
+        };
+
+        // Inicializar App
+        async function initApp() {
+            try {
+                let firebaseConfig = null;
+
+                // 1. Entorno de prueba (esta plataforma)
+                if (typeof __firebase_config !== 'undefined') {
+                    firebaseConfig = JSON.parse(__firebase_config);
+                } 
+                // 2. Para GITHUB PAGES: Si quieres tabla multijugador real en vivo, reemplaza null por tus credenciales de Firebase:
+                /* else {
+                    firebaseConfig = {
+                        apiKey: "TU_API_KEY",
+                        authDomain: "tu-proyecto.firebaseapp.com",
+                        projectId: "tu-proyecto",
+                        storageBucket: "tu-proyecto.appspot.com",
+                        messagingSenderId: "123456789",
+                        appId: "1:12345:web:abcde"
+                    };
+                }
+                */
+
+                if (firebaseConfig && firebaseConfig.projectId !== "dummy-project") {
+                    const app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    throw new Error("No hay configuración de Firebase. Activando modo local.");
+                }
+
+                ui.loading.classList.add('hidden');
+                ui.login.classList.remove('hidden');
+
+            } catch (error) {
+                console.warn("Aviso:", error.message, "El juego funcionará guardando puntajes en el navegador.");
+                modoLocal = true; // Activa almacenamiento local para GitHub Pages
+                ui.loading.classList.add('hidden');
+                ui.login.classList.remove('hidden');
+            }
+        }
+
+        // ==========================================
+        // LÓGICA DEL JUEGO
+        // ==========================================
+        
+        window.iniciarJuego = function() {
+            const nombre = document.getElementById('player-name').value.trim();
+            const area = document.getElementById('player-area').value;
+
+            if (nombre.length < 3) { alert("Por favor, ingresa tu nombre y apellido real."); return; }
+            if (!area) { alert("Por favor, selecciona tu área de trabajo."); return; }
+
+            jugadorActual = { nombre, area, puntaje: 0 };
+            indexPregunta = 0;
+            
+            ui.login.classList.add('hidden');
+            ui.quiz.classList.remove('hidden');
+            ui.quiz.classList.add('fade-in');
+            
+            actualizarMarcador();
+            cargarPregunta();
+        }
+
+        function actualizarMarcador() {
+            document.getElementById('score-display').innerText = jugadorActual.puntaje;
+        }
+
+        function mostrarPuntosAnimados(puntos, elementoBoton) {
+            const rect = elementoBoton.getBoundingClientRect();
+            const quizRect = ui.quiz.getBoundingClientRect();
+            
+            const pop = document.createElement('div');
+            pop.className = 'point-pop ' + (puntos > 0 ? 'text-green-500' : 'text-red-500');
+            pop.innerText = puntos > 0 ? `+${puntos}` : `${puntos}`;
+            
+            pop.style.left = (rect.left - quizRect.left + rect.width/2) + 'px';
+            pop.style.top = (rect.top - quizRect.top) + 'px';
+            
+            ui.quiz.appendChild(pop);
+            setTimeout(() => pop.remove(), 1000);
+        }
+
+        function cargarPregunta() {
+            const escenario = escenarios[indexPregunta];
+            
+            const imgElement = document.getElementById('scenario-image');
+            imgElement.src = escenario.imagen;
+            
+            document.getElementById('scenario-counter').innerText = `Caso ${indexPregunta + 1}/${escenarios.length}`;
+            document.getElementById('area-tag').innerText = escenario.area;
+            document.getElementById('question-text').innerText = escenario.pregunta;
+            document.getElementById('progress-bar').style.width = `${(indexPregunta / escenarios.length) * 100}%`;
+            
+            document.getElementById('feedback-box').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            
+            const contenedor = document.getElementById('options-container');
+            contenedor.innerHTML = '';
+
+            escenario.opciones.forEach((opcion, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'opcion-btn w-full text-left p-4 rounded-xl border-2 border-gray-200 bg-white hover:border-orange-400 hover:bg-orange-50 transition font-semibold text-gray-700 shadow-sm outline-none';
+                btn.innerText = opcion;
+                btn.onclick = (e) => evaluarRespuesta(i, btn, e);
+                contenedor.appendChild(btn);
+            });
+        }
+
+        function evaluarRespuesta(indiceSeleccionado, boton, evento) {
+            const escenario = escenarios[indexPregunta];
+            const esCorrecta = (indiceSeleccionado === escenario.correcta);
+            const feedbackBox = document.getElementById('feedback-box');
+            const todosLosBotones = document.querySelectorAll('.opcion-btn');
+
+            todosLosBotones.forEach(b => b.classList.remove('shake', 'border-red-500', 'bg-red-50', 'text-red-700'));
+
+            if (esCorrecta) {
+                jugadorActual.puntaje += 2;
+                mostrarPuntosAnimados(2, boton);
+                actualizarMarcador();
+
+                boton.classList.add('border-green-500', 'bg-green-50', 'text-green-800');
+                todosLosBotones.forEach(b => { b.disabled = true; b.classList.add('opacity-50', 'cursor-not-allowed'); });
+                boton.classList.remove('opacity-50');
+
+                feedbackBox.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'border-red-200');
+                feedbackBox.classList.add('bg-green-50', 'text-green-800', 'border-green-200', 'fade-in');
+                feedbackBox.innerHTML = `✓ ${escenario.feedbackAcierto}`;
+                
+                document.getElementById('next-btn').classList.remove('hidden');
+                document.getElementById('next-btn').classList.add('fade-in');
+            } else {
+                jugadorActual.puntaje -= 1;
+                mostrarPuntosAnimados(-1, boton);
+                actualizarMarcador();
+
+                boton.classList.add('border-red-500', 'bg-red-50', 'text-red-700', 'shake');
+                
+                feedbackBox.classList.remove('hidden', 'bg-green-50', 'text-green-800', 'border-green-200');
+                feedbackBox.classList.add('bg-red-50', 'text-red-700', 'border-red-200', 'fade-in');
+                feedbackBox.innerHTML = `✗ ${escenario.feedbackErroneo}`;
+            }
+        }
+
+        window.siguientePregunta = function() {
+            indexPregunta++;
+            if (indexPregunta < escenarios.length) {
+                cargarPregunta();
+            } else {
+                finalizarJuego();
+            }
+        }
+
+        async function finalizarJuego() {
+            ui.quiz.classList.add('hidden');
+            ui.end.classList.remove('hidden');
+            ui.end.classList.add('slide-up');
+            
+            document.getElementById('final-score-display').innerText = jugadorActual.puntaje;
+
+            if (modoLocal) {
+                // GUARDAR EN LOCALSTORAGE (GITHUB PAGES SIN FIREBASE)
+                let localLeaderboard = JSON.parse(localStorage.getItem('ferrearmijos_leaderboard') || '[]');
+                localLeaderboard.push({
+                    nombre: jugadorActual.nombre,
+                    area: jugadorActual.area,
+                    puntaje: jugadorActual.puntaje,
+                    fecha: new Date().toISOString()
+                });
+                localStorage.setItem('ferrearmijos_leaderboard', JSON.stringify(localLeaderboard));
+            } else if (auth && auth.currentUser) {
+                // GUARDAR EN FIREBASE
+                try {
+                    const coleccionRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+                    await addDoc(coleccionRef, {
+                        nombre: jugadorActual.nombre,
+                        area: jugadorActual.area,
+                        puntaje: jugadorActual.puntaje,
+                        fecha: serverTimestamp(),
+                        userId: auth.currentUser.uid
+                    });
+                } catch (error) {
+                    console.error("Error al guardar puntaje en Firebase:", error);
+                }
+            }
+        }
+
+        // ==========================================
+        // LEADERBOARD (TABLA DE POSICIONES)
+        // ==========================================
+        window.verLeaderboard = function() {
+            ui.login.classList.add('hidden');
+            ui.quiz.classList.add('hidden');
+            ui.end.classList.add('hidden');
+            ui.leaderboard.classList.remove('hidden');
+            ui.leaderboard.classList.add('flex', 'fade-in');
+
+            const lista = document.getElementById('leaderboard-list');
+            lista.innerHTML = '<div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div></div>';
+
+            if (modoLocal) {
+                // RENDERIZAR DESDE LOCALSTORAGE
+                let puntuaciones = JSON.parse(localStorage.getItem('ferrearmijos_leaderboard') || '[]');
+                puntuaciones.sort((a, b) => b.puntaje - a.puntaje);
+                renderizarListaLeaderboard(puntuaciones, lista);
+            } else {
+                // RENDERIZAR DESDE FIREBASE
+                if (!auth || !auth.currentUser) return;
+                const coleccionRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+                
+                if (unsubscribeLeaderboard) unsubscribeLeaderboard(); 
+
+                unsubscribeLeaderboard = onSnapshot(coleccionRef, (snapshot) => {
+                    let puntuaciones = [];
+                    snapshot.forEach(doc => {
+                        puntuaciones.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    puntuaciones.sort((a, b) => b.puntaje - a.puntaje);
+                    renderizarListaLeaderboard(puntuaciones, lista);
+                }, (error) => {
+                    console.error("Error leyendo leaderboard:", error);
+                    lista.innerHTML = '<div class="text-center text-red-500 py-10">Error al cargar la tabla de posiciones.</div>';
+                });
+            }
+        }
+
+        function renderizarListaLeaderboard(puntuaciones, listaElement) {
+            listaElement.innerHTML = ''; 
+            
+            if(puntuaciones.length === 0) {
+                listaElement.innerHTML = '<div class="text-center py-10 text-gray-500">Aún no hay participantes registrados.</div>';
+                return;
+            }
+
+            puntuaciones.forEach((jugador, index) => {
+                let colorMedalla = 'bg-gray-100 text-gray-600';
+                let trofeo = '';
+                if (index === 0) { colorMedalla = 'bg-yellow-100 text-yellow-700 border-yellow-300'; trofeo = '🏆'; }
+                else if (index === 1) { colorMedalla = 'bg-gray-200 text-gray-700 border-gray-400'; trofeo = '🥈'; }
+                else if (index === 2) { colorMedalla = 'bg-orange-100 text-orange-800 border-orange-300'; trofeo = '🥉'; }
+
+                const item = document.createElement('div');
+                item.className = `flex items-center justify-between p-3 rounded-lg border ${colorMedalla}`;
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="font-bold w-6 text-center">${index + 1}</div>
+                        <div>
+                            <div class="font-bold text-gray-900">${jugador.nombre} ${trofeo}</div>
+                            <div class="text-xs opacity-80">${jugador.area}</div>
+                        </div>
+                    </div>
+                    <div class="text-lg font-black">${jugador.puntaje} <span class="text-xs font-normal">pts</span></div>
+                `;
+                listaElement.appendChild(item);
+            });
+        }
+
+        window.reiniciarApp = function() {
+            if (unsubscribeLeaderboard) unsubscribeLeaderboard(); 
+            ui.leaderboard.classList.add('hidden');
+            ui.end.classList.add('hidden');
+            ui.login.classList.remove('hidden');
+            
+            document.getElementById('player-name').value = '';
+            document.getElementById('player-area').value = '';
+        }
+
+        window.addEventListener('load', initApp);
+
+    </script>
+</body>
+</html>
